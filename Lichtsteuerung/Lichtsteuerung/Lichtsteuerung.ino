@@ -1,22 +1,39 @@
+#include <utility.h>
+#include <StandardCplusplus.h>
+#include <unwind-cxx.h>
+#include <system_configuration.h>
+
+
 #include <FastLED.h>
+#include <string>
+#include <vector>
+
+
+using namespace std;
 
 #define NUM_LEDS 450
 #define DATA_PIN 6
 #define NUM_BEAMS 1
+//initializations
 CRGB leds[NUM_LEDS];
 int currentLED=0;
 int tau=0;
 int breite=3;
-int BO[NUM_BEAMS];
-
+int BO [NUM_BEAMS] = { }; //another way to allocate storage and initialize with zeros
+vector<int> LEDkarte; //= readLEDmap(pathLEDmap);
+string pathLEDmap = "./LEDkarte.txt";
+//create a lookupTable for LEDpositions and fill it
+vector<vector<int>> seg2ledsLookup;
+fillSegLookUp()
+int NUM_SEG = seg2ledsLookup.size()
 
 void setup() {
-  // put your setup code here, to run once:
-  FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
+  //initializing Leds
+FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
   for (int i=0; i<NUM_LEDS; i++){
     leds[i] = CRGB::Black;
   }
-  FastLED.show();
+  FastLED.show(); 
 }
 
 void loop() {
@@ -25,26 +42,38 @@ void loop() {
   tau++;
   }
 
-int* mapSeg(int x){
-  int* = x{0}; 
+void SegLookUp(){ 
+	for (int i=0; i <= LEDkarte.size(); i++)
+	{
+		seg2ledsLookup[LEDkarte[i]].push_back(i);
+	}
 }
 
+int* mapSeg(int seg){
+//return a vector of ints that represent all indeces of the LEDs in the given segement
+	return seg2ledsLookup[seg];
+} 
 
 void Beam (int t, int b_id, int breite, int spawn){
+/*creates a beam that starts at a given time spawn,
+runs through by manipulating the brightness of the LEDS and 
+ restart from beginning when last segment is reached
+*/ 
   if (tau>spawn){
     int ort = BO[b_id];
     int* segleds;
     int inc = 256/(breite/2 +1);
     for (int i=ort-1; i>=ort-breite/2; i--){ //Ausgehender Ball
-       segleds=mapSeg(i);
-      for (int led : segleds)
-        leds[led].fadeToBlackBy(+inc);
-      
-  }
+	i = i % NUM_SEG //restart
+	segleds=mapSeg(i);
+	for (int led : segleds)
+		leds[led].fadeToBlackBy(+inc);
+      }
     for (int i=ort; i<=ort+breite/2; i++){ //aufgehender Ball
-      segleds=mapSeg(i);
-      for (int led : segleds){
-        leds[led].fadeToBlackBy(-inc);
+	i = i % NUM_SEG //restart
+	segleds=mapSeg(i);
+	for (int led : segleds){
+		leds[led].fadeToBlackBy(-inc);
       }
     }
     BO[b_id]++;
