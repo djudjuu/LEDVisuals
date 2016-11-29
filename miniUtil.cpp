@@ -1,6 +1,7 @@
 #include<vector>
 #include<fstream>
 #include<iostream>
+#include<math.h>
 
 using namespace std;
 
@@ -72,8 +73,15 @@ void fillSegLookUp(){
 	//return 1;
 } 
 
+
+int a = 5;
+int b =2;
 int main()
 {
+	//learning about c++ addition
+	cout <<"5/2"<<a/b<<"ee"<< max(0, 20-10)<<endl;
+	int breite = 3;
+	cout << "ballreadius"<<floor(256/(floor(breite/2) +1))<< endl;
 	//cout << "ahhhhhhhhhhhh"<< endl;
 	fillSegLookUp();
 	//cout << "bhhhhhhhhhhhh"<< nSegs<<endl;
@@ -86,8 +94,8 @@ int main()
 		//cout << "seg"<< i<< "holds"<<segleds->size();
 		//cout << "elements and its LEDS-indeces are:";
 		for (int i : *segleds)
-			//cout << i<<',';
-			leds[ i ] = CRGB::Red;
+			cout << i<<',';
+			//leds[ i ] = CRGB::Red;
 		//cout <<"ende segment"<< endl;
 	}
 	//cout << "ende"<<endl;
@@ -97,13 +105,3 @@ int main()
 
 
 
-	//vector<int> ns;
-	//readLEDmap("../LEDkarte.txt");
-	//ns = readLEDmap("../KarteParallel.txt");
-	//int l [3] = {1,2,3};
-	//cout <<"size:"<< sizeof(l);
-	//cout <<"sizeof MAP:"<< sizeof(ns); 
-	//for (int i : ns)
-	//	cout << i << ',';
-	//vector<int> v [2] = {{1,2},{2,3}};
-	//cout << "myvector"<< v[0][1];
