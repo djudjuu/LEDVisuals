@@ -1,0 +1,162 @@
+#include "FastLED.h"
+
+FASTLED_USING_NAMESPACE
+
+#define NUM_LEDS 450
+#define DATA_PIN 6
+
+CRGB leds[NUM_LEDS];
+
+const int nSegs = 24;
+CRGB vleds[nSegs+1];
+const int nLimits = 44; 
+
+#define LED_TYPE    WS2811
+#define COLOR_ORDER GRB
+
+#define BRIGHTNESS          96
+#define FRAMES_PER_SECOND  120
+
+int limits  [nLimits] = {0,1,2,1,2,3,4,5,6,7,8,9,10,11,12,11,10,9,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,23,22,21,20,19,18,17,18,19};
+int limit2seg [nLimits] = {15,22,45,69,74,87,95,149,153,160,172,178,186,193,222,229,235,247,262,269,277,283,292,299,304,311,317,325,330,336,344,350,357,365,387,394,401,406,411,418,424,432,439};
+
+void setup() {
+  delay(3000); // 3 second delay for recovery
+  
+  // tell FastLED about the LED strip configuration
+  FastLED.addLeds<LED_TYPE,DATA_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
+  //FastLED.addLeds<LED_TYPE,DATA_PIN,CLK_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
+
+  // set master brightness control
+  FastLED.setBrightness(BRIGHTNESS);
+}
+
+
+// List of patterns to cycle through.  Each is defined as a separate function below.
+typedef void (*SimplePatternList[])();
+SimplePatternList gPatterns = {confetti, sinelon, juggle, beam, theaterChase, theaterChaseRainbow};
+
+uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
+uint8_t gHue = 0; // rotating "base color" used by many of the patterns
+  
+void loop()
+{
+  // Call the current pattern function once, updating the 'leds' array
+  gPatterns[gCurrentPatternNumber]();
+
+  // send the 'leds' array out to the actual LED strip
+  FastLED.show();  
+  // insert a delay to keep the framerate modest
+  FastLED.delay(1000/FRAMES_PER_SECOND); 
+
+  // do some periodic updates
+  EVERY_N_MILLISECONDS( 20 ) { gHue++; } // slowly cycle the "base color" through the rainbow
+  EVERY_N_SECONDS( 10 ) { nextPattern(); } // change patterns periodically
+}
+
+#define ARRAY_SIZE(A) (sizeof(A) / sizeof((A)[0]))
+
+void nextPattern()
+{
+  // add one to the current pattern number, and wrap around at the end
+  gCurrentPatternNumber = (gCurrentPatternNumber + 1) % ARRAY_SIZE( gPatterns);
+}
+
+int getVirtual(int rled)
+{
+  for (int l=0;l<nLimits;l++)
+  {
+    if (rled < limit2seg[l]) 
+    {
+      return limits[l];
+    }
+  } 
+}
+
+void fire()
+{
+  for (int i=0; i<NUM_LEDS; i++)
+  {
+    leds[i] = vleds[getVirtual(i)];
+  }
+  FastLED.show();
+  delay(50);
+}
+
+void confetti() 
+{
+  // random colored speckles that blink in and fade smoothly
+  fadeToBlackBy( leds, NUM_LEDS, 10);
+  int pos = random16(NUM_LEDS);
+  leds[pos] += CHSV( gHue + random8(64), 200, 255);
+}
+
+void sinelon()
+{
+  // a colored dot sweeping back and forth, with fading trails
+  fadeToBlackBy( leds, NUM_LEDS, 20);
+  int pos = beatsin16(7,0,NUM_LEDS);
+  leds[pos] += CHSV( gHue, 255, 192);
+}
+
+void juggle() {
+  // eight colored dots, weaving in and out of sync with each other
+  fadeToBlackBy( leds, NUM_LEDS, 20);
+  byte dothue = 0;
+  for( int i = 0; i < 8; i++) {
+    leds[beatsin16(i+7,0,NUM_LEDS)] |= CHSV(dothue, 200, 255);
+    dothue += 32;
+  }
+}
+void beam(){
+  for (int i=0; i<nSegs+1; i++)
+  {
+    if (i==0)
+    {
+      vleds[i]= CHSV(gHue, 255, 255);
+      vleds[nSegs]=CRGB::Black;
+      fire();
+    }
+    else
+    {
+      vleds[i]= CHSV(gHue, 255, 255);
+      vleds[i-1]=CRGB::Black;
+      fire();
+    }
+  }
+} 
+void theaterChase() {
+  uint8_t wait = 50;
+  for (int j=0; j<20; j++) {
+    for (int q=0; q < 3; q++) {
+      for (uint16_t i=0; i < NUM_LEDS; i=i+3) {
+        leds[i+q] = CHSV(gHue, 255, 255);    //turn every third pixel on
+      }
+      FastLED.show();
+      delay(wait);
+      for (uint16_t i=0; i < NUM_LEDS; i=i+3) {
+        leds[i+q] = CRGB::Black;        //turn every third pixel off
+      }
+    }
+  }
+}
+void theaterChaseRainbow() {
+  uint8_t wait = 50;
+  for (int j=0; j < 256; j++) {     // cycle all 256 colors in the wheel
+    for (int q=0; q < 3; q++) {
+      for (uint16_t i=0; i < NUM_LEDS; i=i+3) {
+        leds[i+q]=CHSV(gHue+j, 255, 255);    //turn every third pixel on
+      }
+      FastLED.show();
+
+      delay(wait);
+
+      for (uint16_t i=0; i < NUM_LEDS; i=i+3) {
+        leds[i+q]=CRGB::Black;     //turn every third pixel off
+      }
+    }
+  }
+}
+
+  
+
